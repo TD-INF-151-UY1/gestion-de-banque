@@ -1,0 +1,134 @@
+package com.workspace;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+
+public class CompteBancaire {
+    private String numero, nom;
+    private double solde;
+    private List<String> historique = new ArrayList<>();
+    private static final double SOLDE_MIN = -1000, FRAIS = 0.50;
+
+    private static class Lous {
+        static String saluer(String nom) {
+            return "👋 Lous: Bienvenue " + nom + "! J'suis ravi de vous aider dans la gestion de vos finances.";
+        }
+
+        static String analyserCompte(CompteBancaire c) {
+            if (c.solde < 0)
+                return "⚠️ Lous: Vous êtes en découvert! Recharger rapidement.";
+            if (c.solde < 500)
+                return "💡 Lous: Solde faible. Envisagez un dépôt.";
+            if (c.solde > 5000)
+                return "📈 Lous: Excellent solde! Vous êtes financièrement stable.";
+            return "✅ Lous: Compte sain. Continuez ainsi!";
+        }
+
+        static String suggererAction(Map<String, CompteBancaire> comptes) {
+            double moySolde = comptes.values().stream().mapToDouble(c -> c.solde).average().orElse(0);
+            return "📊 Lous: Moyenne des soldes: " + String.format("%.2f€", moySolde);
+        }
+    }
+
+    public CompteBancaire(String numero, String nom, double solde) {
+        this.numero = numero;
+        this.nom = nom;
+        this.solde = solde;
+        if (solde > 0)
+            historique.add(log("Dépôt initial", solde));
+    }
+
+    public boolean deposer(double montant) {
+        return verserArgent(montant, "Dépôt");
+    }
+
+    public boolean retirer(double montant) {
+        return verserArgent(montant + FRAIS, "Retrait");
+    }
+
+    public boolean virement(CompteBancaire dest, double montant) {
+        if (solde - montant < SOLDE_MIN)
+            return false;
+        solde -= montant;
+        dest.solde += montant;
+        historique.add(log("Vir→" + dest.nom, montant));
+        dest.historique.add(log("Vir←" + nom, montant));
+        return true;
+    }
+
+    private boolean verserArgent(double montant, String type) {
+        if (solde - montant < SOLDE_MIN)
+            return false;
+        solde -= montant;
+        historique.add(log(type, montant));
+        return true;
+    }
+
+    private String log(String desc, double montant) {
+        return String.format("[%s] %s: %.2f€ → Solde: %.2f€",
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")), desc, montant, solde);
+    }
+
+    public void afficherHistorique() {
+        System.out.println("\n📋 " + nom + " (" + numero + ") - Solde: " + solde + "€");
+        historique.forEach(System.out::println);
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        Map<String, CompteBancaire> comptes = new HashMap<>();
+        String[] menu = { "Créer", "Déposer", "Retirer", "Virer", "Historique", "Conseil Lous", "Quitter" };
+
+        System.out.println("\n🏦 GESTION DE COMPTES BANCAIRES AVEC LOUS (Conseiller IA)\n");
+        System.out.println("🤖 Lous: Bonjour! Que puis-je faire pour vous aujourd'hui?\n");
+        while (true) {
+            for (int i = 0; i < menu.length; i++)
+                System.out.print((i + 1) + "." + menu[i] + " ");
+            System.out.print("\nOption: ");
+            switch (sc.nextLine().trim()) {
+                case "1":
+                    System.out.print("Numéro,Nom,Solde: ");
+                    String[] d = sc.nextLine().split(",");
+                    CompteBancaire nouveau = new CompteBancaire(d[0].trim(), d[1].trim(),
+                            Double.parseDouble(d[2].trim()));
+                    comptes.put(d[0].trim(), nouveau);
+                    System.out.println(Lous.saluer(d[1].trim()));
+                    System.out.println(Lous.analyserCompte(nouveau));
+                    break;
+                case "2":
+                    System.out.print("Numéro,Montant: ");
+                    String[] x = sc.nextLine().split(",");
+                    comptes.get(x[0].trim()).deposer(Double.parseDouble(x[1].trim()));
+                    break;
+                case "3":
+                    System.out.print("Numéro,Montant: ");
+                    String[] y = sc.nextLine().split(",");
+                    comptes.get(y[0].trim()).retirer(Double.parseDouble(y[1].trim()));
+                    break;
+                case "4":
+                    System.out.print("Source,Dest,Montant: ");
+                    String[] z = sc.nextLine().split(",");
+                    comptes.get(z[0].trim()).virement(comptes.get(z[1].trim()), Double.parseDouble(z[2].trim()));
+                    break;
+                case "5":
+                    System.out.print("Numéro: ");
+                    comptes.get(sc.nextLine().trim()).afficherHistorique();
+                    break;
+                case "6":
+                    System.out.print("Analyser quel compte (Numéro ou 'tous'): ");
+                    String analyse = sc.nextLine().trim();
+                    if (analyse.equals("tous")) {
+                        System.out.println(Lous.suggererAction(comptes));
+                        comptes.values().forEach(c -> System.out.println(Lous.analyserCompte(c)));
+                    } else {
+                        System.out.println(Lous.analyserCompte(comptes.get(analyse)));
+                    }
+                    break;
+                case "7":
+                    System.out.println("Au revoir!");
+                    return;
+            }
+        }
+    }
+}
