@@ -1,0 +1,124 @@
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
+
+class Compte {
+    String numero, nom;
+    double solde;
+    Compte(String n, String nom, double s) {
+        this.numero = n;
+        this.nom = nom;
+        this.solde = s;
+    }
+    void deposer(double m) {
+        if (m <= 0) {
+            System.out.println("Montant invalide pour le dépôt.");
+            return;
+        }
+        solde += m;
+        System.out.println("Dépôt de " + m + "€ effectué.");
+    }
+    void retirer(double m) {
+        if (m <= 0) {
+            System.out.println("Montant invalide pour le retrait.");
+            return;
+        }
+        if (solde >= m) {
+            solde -= m;
+            System.out.println("Retrait de " + m + "€ effectué.");
+        } else {
+            System.out.println("Solde insuffisant.");
+        }
+    }
+    void afficher() {
+        System.out.println("Numéro: " + numero + ", Nom: " + nom + ", Solde: " + solde + "€");
+    }
+}
+
+public class Banque {
+    public static void main(String[] args) {
+        Map<String, Compte> comptes = new HashMap<>();
+        Scanner sc = new Scanner(System.in);
+        while (true) {
+            System.out.println("\n1. Créer compte\n2. Dépôt\n3. Retrait\n4. Afficher tous les comptes\n5. Quitter");
+            System.out.print("Choix: ");
+            String line = sc.nextLine();
+            int choix;
+            try {
+                choix = Integer.parseInt(line.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Choix invalide.");
+                continue;
+            }
+            switch (choix) {
+                case 1:
+                    System.out.print("Numéro du compte: ");
+                    String numero = sc.nextLine().trim();
+                    if (numero.isEmpty()) {
+                        System.out.println("Numéro invalide.");
+                        break;
+                    }
+                    if (comptes.containsKey(numero)) {
+                        System.out.println("Un compte avec ce numéro existe déjà.");
+                        break;
+                    }
+                    System.out.print("Nom du titulaire: ");
+                    String nom = sc.nextLine().trim();
+                    System.out.print("Solde initial: ");
+                    double solde = readDouble(sc);
+                    comptes.put(numero, new Compte(numero, nom, solde));
+                    System.out.println("Compte créé.");
+                    break;
+                case 2:
+                    System.out.print("Numéro du compte: ");
+                    String numDep = sc.nextLine().trim();
+                    Compte cDep = comptes.get(numDep);
+                    if (cDep == null) {
+                        System.out.println("Compte introuvable.");
+                        break;
+                    }
+                    System.out.print("Montant à déposer: ");
+                    double md = readDouble(sc);
+                    cDep.deposer(md);
+                    break;
+                case 3:
+                    System.out.print("Numéro du compte: ");
+                    String numRet = sc.nextLine().trim();
+                    Compte cRet = comptes.get(numRet);
+                    if (cRet == null) {
+                        System.out.println("Compte introuvable.");
+                        break;
+                    }
+                    System.out.print("Montant à retirer: ");
+                    double mr = readDouble(sc);
+                    cRet.retirer(mr);
+                    break;
+                case 4:
+                    if (comptes.isEmpty()) {
+                        System.out.println("Aucun compte enregistré.");
+                    } else {
+                        comptes.values().forEach(Compte::afficher);
+                    }
+                    break;
+                case 5:
+                    System.out.println("Au revoir.");
+                    sc.close();
+                    return;
+                default:
+                    System.out.println("Choix non reconnu.");
+            }
+        }
+    }
+
+    private static double readDouble(Scanner sc) {
+        while (true) {
+            String s = sc.nextLine().trim();
+            try {
+                return Double.parseDouble(s.replace(',', '.'));
+            } catch (NumberFormatException e) {
+                System.out.print("Entrée invalide. Entrez un nombre: ");
+            }
+        }
+    }
+}
+
