@@ -17,7 +17,7 @@ public class CompteBancaire {
 
         static String analyserCompte(CompteBancaire c) {
             if (c.solde < 0)
-                return "⚠️ Lous: Vous êtes en découvert! Recharger rapidement.";
+                return "⚠️ Lous: Vous êtes a découvert! Recharger rapidement.";
             if (c.solde < 500)
                 return "💡 Lous: Solde faible. Envisagez un dépôt.";
             if (c.solde > 5000)
