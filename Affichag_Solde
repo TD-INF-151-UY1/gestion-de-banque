@@ -1,0 +1,39 @@
+import java.text.NumberFormat;
+import java.util.Locale;
+
+public class CompteBancaire {
+    private double solde;
+    // Constructeur
+    public CompteBancaire(double soldeInitial) {
+        this.solde = soldeInitial;
+    }
+
+    public String consulterSolde() {
+        NumberFormat nf = NumberFormat.getNumberInstance(Locale.US);
+        nf.setGroupingUsed(false);
+        nf.setMinimumFractionDigits(2);
+        nf.setMaximumFractionDigits(2);
+        return nf.format(solde);
+    }
+       public void deposer(double montant) {
+        if (montant > 0) {
+            solde += montant;
+        }
+    }
+
+    public void retirer(double montant) {
+        if (montant > 0 && montant <= solde) {
+            solde -= montant;
+        }
+    }
+
+    // Petit main de démonstration
+    public static void main(String[] args) {
+        CompteBancaire compte = new CompteBancaire(1000.0);
+        System.out.println("Solde initial: " + compte.consulterSolde());
+        compte.deposer(200.0);
+        System.out.println("Après dépôt: " + compte.consulterSolde());
+        compte.retirer(150.5);
+        System.out.println("Après retrait: " + compte.consulterSolde());
+    }
+}
