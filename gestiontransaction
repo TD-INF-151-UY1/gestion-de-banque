@@ -1,0 +1,84 @@
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.UUID;
+
+public class Transaction {
+    private String id;
+    private String type; // DEPOT, RETRAIT, TRANSFERT
+    private double montant;
+    private LocalDateTime dateTime;
+    private String description;
+    private double soldeApresTx;
+    private static final DateTimeFormatter DISPLAY_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss");
+    private static final DateTimeFormatter CSV_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+    // Constructeur pour nouvelle transaction (génère un id et dateNow)
+    public Transaction(String type, double montant, String description, double soldeApresTx) {
+        this.id = UUID.randomUUID().toString();
+        this.type = type;
+        this.montant = montant;
+        this.dateTime = LocalDateTime.now();
+        this.description = description.replace("\n", " ");
+        this.soldeApresTx = soldeApresTx;
+    }
+
+    // Constructeur utilisé lors du chargement depuis CSV
+    public Transaction(String id, String type, double montant, LocalDateTime dateTime, String description, double soldeApresTx) {
+        this.id = id == null || id.isEmpty() ? UUID.randomUUID().toString() : id;
+        this.type = type;
+        this.montant = montant;
+        this.dateTime = dateTime == null ? LocalDateTime.now() : dateTime;
+        this.description = description == null ? "" : description.replace("\n", " ");
+        this.soldeApresTx = soldeApresTx;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public double getMontant() {
+        return montant;
+    }
+
+    public LocalDateTime getDateTime() {
+        return dateTime;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public double getSoldeApresTx() {
+        return soldeApresTx;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    // Sérialisation CSV (séparateur ';' pour éviter les problèmes avec les virgules)
+    public String toCSV(String accountNumber) {
+        // id;type;montant;datetime;description;soldeAfter;accountNumber
+        String dt = dateTime.format(CSV_FORMATTER);
+        String safeDesc = description.replace(";", ",");
+        return String.join(";", id, type, String.valueOf(montant), dt, safeDesc, String.valueOf(soldeApresTx), accountNumber == null ? "" : accountNumber);
+    }
+
+    // Parse une date au format CSV (ISO_LOCAL_DATE_TIME)
+    public static LocalDateTime parseCsvDate(String s) {
+        try {
+            return LocalDateTime.parse(s, CSV_FORMATTER);
+        } catch (DateTimeParseException ex) {
+            return LocalDateTime.now();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%-12s | %10.2f € | %s | %s | Solde: %.2f €",
+                type, montant, dateTime.format(DISPLAY_FORMATTER), description, soldeApresTx);
+    }
+}
+
+
