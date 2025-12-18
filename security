@@ -1,0 +1,106 @@
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+
+public class SecuritySystem {
+
+    public static void main(String[] args) {
+
+        AccountSecurity security = new AccountSecurity();
+
+        System.out.println("=== TEST 1: Weak Password ===");
+        System.out.println(security.register("user1", "abc", "FACE1"));
+
+        System.out.println("\n=== TEST 2: Strong Password Registration ===");
+        System.out.println(security.register("user2", "StrongP@ss1", "FACE123"));
+
+        System.out.println("\n=== TEST 3: Correct Login (Password + Face ID) ===");
+        System.out.println(security.login("user2", "StrongP@ss1", "FACE123"));
+
+        System.out.println("\n=== TEST 4: Wrong Face ID ===");
+        System.out.println(security.login("user2", "StrongP@ss1", "WRONGFACE"));
+
+        System.out.println("\n=== TEST 5: Wrong Password ===");
+        System.out.println(security.login("user2", "WrongPass1!", "FACE123"));
+
+        System.out.println("\n=== TEST 6: Unknown User ===");
+        System.out.println(security.login("ghost", "Test123!", "FACE999"));
+    }
+}
+
+class PasswordValidator {
+
+    public static boolean isValid(String password) {
+        if (password.length() < 8) return false;
+
+        boolean upper = false, lower = false, digit = false, special = false;
+
+        for (char c : password.toCharArray()) {
+            if (Character.isUpperCase(c)) upper = true;
+            else if (Character.isLowerCase(c)) lower = true;
+            else if (Character.isDigit(c)) digit = true;
+            else special = true;
+        }
+
+        return upper && lower && digit && special;
+    }
+}
+
+class FaceID {
+
+    private HashMap<String, String> faceDatabase = new HashMap<>();
+
+    public void registerFace(String username, String faceToken) {
+        faceDatabase.put(username, faceToken);
+    }
+
+    public boolean verifyFace(String username, String faceToken) {
+        return faceDatabase.containsKey(username)
+                && faceDatabase.get(username).equals(faceToken);
+    }
+}
+
+class AccountSecurity {
+
+    private HashMap<String, String> users = new HashMap<>();
+    private FaceID faceID = new FaceID();
+
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-256");
+            byte[] hash = md.digest(password.getBytes());
+            StringBuilder sb = new StringBuilder();
+
+            for (byte b : hash) sb.append(String.format("%02x", b));
+            return sb.toString();
+
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Hash error");
+        }
+    }
+}
+
+    public boolean register(String username, String password, String faceToken) {
+
+        if (!PasswordValidator.isValid(password)) {
+            System.out.println("Password does not meet security rules.");
+            return false;
+        }
+
+        users.put(username, hashPassword(password));
+        faceID.registerFace(username, faceToken);
+        return true;
+    }
+
+    public boolean login(String username, String password, String faceToken) {
+
+        if (!users.containsKey(username)) return false;
+
+        boolean passwordOK =
+                users.get(username).equals(hashPassword(password));
+
+        boolean faceOK =
+                faceID.verifyFace(username, faceToken);
+
+        return passwordOK && faceOK;
+    }
